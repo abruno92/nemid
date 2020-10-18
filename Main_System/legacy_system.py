@@ -31,22 +31,22 @@ if __name__ == "__main__":
     col_list = ['FirstName', 'LastName', 'DateOfBirth', 'Email', 'Phone', 'Address', 'Country']
     symbol = ('-') 
     file = 'people.csv'
-    path = Path.cwd().joinpath(f'{file}')
+    dir = Path.cwd()
+    path = dir.joinpath(f'{file}')
 
     base_url = 'http://127.0.0.1:8080'
 
     df = create_cpr(read_data(f'{path}', col_list), symbol)
     person = '\n'.join(df.apply(create_xml, axis=1))
-
-    response = requests.get(base_url)
+    print(person)
 
     headers = {'Content-Type': 'application/xml'}
     response = requests.post(f"{base_url}/nemId", data=person, headers=headers).text
 
     person = json.loads(response.content)
 
-    with open(f'{path}/msgpack_files/{person}.msgpack', "wb") as outfile:
-         packed = msgpack.packb(person.__dict__)
-         outfile.write(packed)
+    with open(f'{dir}/{person}.msgpack', "wb") as outfile:
+          packed = msgpack.packb(person.__dict__)
+          outfile.write(packed)
 
     print(response)
