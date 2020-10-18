@@ -39,14 +39,13 @@ if __name__ == "__main__":
     person = '\n'.join(df.apply(create_xml, axis=1))
 
     response = requests.get(base_url)
-    print(response)
 
     headers = {'Content-Type': 'application/xml'}
     response = requests.post(f"{base_url}/nemId", data=person, headers=headers).text
 
     person = json.loads(response.content)
 
-    with open('{path}/msgpack_files/{person}.msgpack', "wb") as outfile:
+    with open(f'{path}/msgpack_files/{person}.msgpack', "wb") as outfile:
          packed = msgpack.packb(person.__dict__)
          outfile.write(packed)
 
