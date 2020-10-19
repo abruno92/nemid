@@ -13,7 +13,7 @@ def read_data(file, list):
 
 def create_cpr(df, symbol):
     number = np.random.randint(1111, 9999, size=len(df)).astype(str)
-    df['CprNumber'] = df['DateOfBirth'].str.replace('-', '') + symbol + number
+    df['CprNumber'] = df.pop('DateOfBirth').str.replace('-', '') + symbol + number
     return df
 
 def create_xml(df):
@@ -34,16 +34,17 @@ if __name__ == "__main__":
     dir = Path.cwd()
     path = dir.joinpath(f'{file}')
 
-    base_url = 'http://127.0.0.1:8080'
+    ESB_SERVICE_ADDRESS = 'http://127.0.0.1:8080'
+    ESB_SERVICE_ENDPOINT = 'nemID'
 
     df = create_cpr(read_data(f'{path}', col_list), symbol)
     person = '\n'.join(df.apply(create_xml, axis=1))
-    print(person)
 
-    headers = {'Content-Type': 'application/xml'}
-    response = requests.post(f"{base_url}/nemId", data=person, headers=headers).text
+    headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
+    response = requests.post(f"{ESB_SERVICE_ADDRESS}/{ESB_SERVICE_ENDPOINT}", data=person, headers=headers).text
+    person.nemID = json.loads(response.content)["nemID"]
 
-    person = json.loads(response.content)
+    print(person.nemID)
 
     with open(f'{dir}/{person}.msgpack', "wb") as outfile:
           packed = msgpack.packb(person.__dict__)
