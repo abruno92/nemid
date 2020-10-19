@@ -5,8 +5,10 @@ import json
 import os
 import requests
 from pathlib import Path
-
 from pip._vendor import msgpack
+
+from string import Template
+
 
 # Read columns specified in csv files and then turn data into dataframe
 def read_data(file, list):
@@ -24,18 +26,17 @@ def create_cpr(df, symbol):
 # Create xml with data from df
 def create_xml(df):
     shema = 'Person'
-    version = "1.1"
-    xml = [f'<?xml version="{version}" encoding="UTF-8"?>']
-    xml.append("<{}>".format(shema))
+    xml = ['<{}>'.format(shema)]
     for data in df.index:
-        xml.append(f'  <field name="{data}">{df[data]}</field>')
-    xml.append(f"</{shema}>")
+        xml.append(f'<field name="{data}">{df[data]}</field>')
+    xml.append(f'</{shema}>')
     return xml
 
 if __name__ == "__main__":
     # col_list = ['FirstName', 'LastName', 'DateOfBirth', 'Email']
     col_list = ['FirstName', 'LastName', 'DateOfBirth', 'Email', 'Phone', 'Address', 'Country']
     symbol = ('-') 
+    version = '1.1'
     file = 'people.csv'
     path = Path(os.path.dirname(__file__))/f"{file}" 
 
@@ -45,15 +46,16 @@ if __name__ == "__main__":
     df = create_cpr(read_data(f'{path}', col_list), symbol)
     person = df.apply(create_xml, axis=1)
 
-    headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
+    xml_wrap = Template(f'<?xml version="{version}" encoding="UTF-8"?><root>{person}</root>')
+    person_xml = xml_wrap.substitute({'person' : person})
+
+    print(person_xml)
+
+    # headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
     
-    response = requests.post(f"{ESB_SERVICE_ADDRESS}/{ESB_SERVICE_ENDPOINT}", data=person, headers=headers).text
-    person.nemID = json.loads(response.content)["nemID"]
+    # response = requests.post(f"{ESB_SERVICE_ADDRESS}/{ESB_SERVICE_ENDPOINT}", data=person, headers=headers).text
+    # person.nemID = json.loads(response.content)["nemID"]
 
-    print(person.nemID)
-
-    with open(f'{dir}/{person}.msgpack', "wb") as outfile:
-          packed = msgpack.packb(person.__dict__)
-          outfile.write(packed)
-
-    print(response)
+    # with open(f'{dir}/{person}.msgpack', "wb") as outfile:
+    #       packed = msgpack.packb(person.__dict__)
+    #       outfile.write(packed)
