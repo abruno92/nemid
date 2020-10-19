@@ -46,16 +46,14 @@ if __name__ == "__main__":
     df = create_cpr(read_data(f'{path}', col_list), symbol)
     person = df.apply(create_xml, axis=1)
 
-    xml_wrap = Template(f'<?xml version="{version}" encoding="UTF-8"?><root>{person}</root>')
+    xml_wrap = Template(f'<?xml version="{version}" encoding="UTF-8"?><people>{person}</people>')
     person_xml = xml_wrap.substitute({'person' : person})
 
-    print(person_xml)
-
-    # headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
+    headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
     
-    # response = requests.post(f"{ESB_SERVICE_ADDRESS}/{ESB_SERVICE_ENDPOINT}", data=person, headers=headers).text
-    # person.nemID = json.loads(response.content)["nemID"]
+    response = requests.post(f"{ESB_SERVICE_ADDRESS}/{ESB_SERVICE_ENDPOINT}", data=person, headers=headers).text
+    person.nemID = json.loads(response.content)["nemID"]
 
-    # with open(f'{dir}/{person}.msgpack', "wb") as outfile:
-    #       packed = msgpack.packb(person.__dict__)
-    #       outfile.write(packed)
+    with open(f'{dir}/{person}.msgpack', "wb") as outfile:
+          packed = msgpack.packb(person.__dict__)
+          outfile.write(packed)
