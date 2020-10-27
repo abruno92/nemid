@@ -11,6 +11,14 @@ from pip._vendor import msgpack
 
 from string import Template
 
+symbol = ('-') 
+file = 'people.csv'
+dir = path = Path(os.path.dirname(__file__))
+path = Path(os.path.dirname(__file__))/f"{file}"
+headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
+esb_serivce_address = 'http://127.0.0.1:8080'
+esb_serivce_endpoint = 'nemID'
+
 
 # Read columns specified in csv files and then turn data into dataframe
 def read_data(file, list):
@@ -22,35 +30,35 @@ def read_data(file, list):
 # with no space and then add new symbol followed by the random numbers generated
 def create_cpr(df, symbol):
     number = np.random.randint(1111, 9999, size=len(df)).astype(str)
-    df['CprNumber'] = df.pop('DateOfBirth').str.replace('-', '') + symbol + number
+    df['CprNumber'] = df['DateOfBirth'].str.replace('-', '') + symbol + number
     return df
 
-# Create xml with data from df
+# Create xml with specific elements from df
 def create_xml(firstname, lastname, email, cpr):
-    person = Element
+    person = ET.Element('Person')
+    ET.SubElement(person, 'FirstName').text = firstname
+    ET.SubElement(person, 'LastName').text = lastname
+    ET.SubElement(person, 'Email').text = email
+    ET.SubElement(person, 'CprNumber').text = cpr
+    return ET.tostring(person)
 
 if __name__ == "__main__":
-    # col_list = ['FirstName', 'LastName', 'DateOfBirth', 'Email']
     col_list = ['FirstName', 'LastName', 'DateOfBirth', 'Email', 'Phone', 'Address', 'Country']
-    symbol = ('-') 
-    version = '1.1'
-    file = 'people.csv'
-    path = Path(os.path.dirname(__file__))/f"{file}" 
-
-    ESB_SERVICE_ADDRESS = 'http://127.0.0.1:8080'
-    ESB_SERVICE_ENDPOINT = 'nemID'
 
     df = create_cpr(read_data(f'{path}', col_list), symbol)
-    person = df.apply(create_xml, axis=1)
 
-    xml_wrap = Template(f'<?xml version="{version}" encoding="UTF-8"?><people>{person}</people>')
-    person_xml = xml_wrap.substitute({'person' : person})
+    for person in df.values.tolist():
+        firstname = person[0] 
+        lastname = person[1]
+        email = person[2] 
+        cpr  = person[7]
 
-    headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
+    person_xml = create_xml(firstname, lastname, email, cpr)
     
-    response = requests.post(f"{ESB_SERVICE_ADDRESS}/{ESB_SERVICE_ENDPOINT}", data=person, headers=headers).text
-    person.nemID = json.loads(response.content)["nemID"]
+    response = requests.post(f"{esb_serivce_address}/{esb_serivce_endpoint}", data=person_xml, headers=headers)
+    
+    nemID = json.loads(response.text)["nemID"]
 
-    with open(f'{dir}/{person}.msgpack', "wb") as outfile:
-          packed = msgpack.packb(person.__dict__)
-          outfile.write(packed)
+    with open(f'{dir}/{cpr}.msgpack', "wb") as outfile:
+           packed = msgpack.packb(person)
+           outfile.write(packed)
