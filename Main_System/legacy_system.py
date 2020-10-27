@@ -4,6 +4,8 @@ import numpy as np
 import json
 import os
 import requests
+import xml.etree.ElementTree as ET
+
 from pathlib import Path
 from pip._vendor import msgpack
 
@@ -24,13 +26,8 @@ def create_cpr(df, symbol):
     return df
 
 # Create xml with data from df
-def create_xml(df):
-    shema = 'Person'
-    xml = ['<{}>'.format(shema)]
-    for data in df.index:
-        xml.append(f'<field name="{data}">{df[data]}</field>')
-    xml.append(f'</{shema}>')
-    return xml
+def create_xml(firstname, lastname, email, cpr):
+    person = Element
 
 if __name__ == "__main__":
     # col_list = ['FirstName', 'LastName', 'DateOfBirth', 'Email']
