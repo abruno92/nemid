@@ -5,16 +5,16 @@ import json
 import os
 import requests
 import xml.etree.ElementTree as ET
+import msgpack
 
 from pathlib import Path
-from pip._vendor import msgpack
 
 from string import Template
 
 symbol = ('-') 
 file = 'people.csv'
-dir = path = Path(os.path.dirname(__file__))
-path = Path(os.path.dirname(__file__))/f"{file}"
+cwd = Path(os.path.dirname(__file__))
+path = cwd/f"{file}"
 headers = {'Content-Type': 'text/xml', 'Accept':'application/xml'}
 esb_serivce_address = 'http://127.0.0.1:8080'
 esb_serivce_endpoint = 'nemID'
@@ -59,6 +59,8 @@ if __name__ == "__main__":
     
     nemID = json.loads(response.text)["nemID"]
 
-    with open(f'{dir}/{cpr}.msgpack', "wb") as outfile:
+    person.append(nemID)
+
+    with open(f'{cwd}/{cpr}.msgpack', "wb") as outfile:
            packed = msgpack.packb(person)
            outfile.write(packed)
